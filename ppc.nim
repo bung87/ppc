@@ -14,7 +14,6 @@ import winim/inc/powrprof    # 电源管理 API（PowerEnumerate 等）
 import std/[os, strutils]
 
 const
-  AppTitle = "电源计划切换"
   WmTrayCallback = UINT(WM_APP + 0x100)  # 托盘图标回调消息
   IdTrayIcon = 1
   CmdBase = 1000                    # 电源计划菜单项 id = CmdBase + 序号
@@ -27,11 +26,28 @@ type
   PowerPlan = object
     guid: GUID
     name: string
+  Lang = enum
+    langEn, langZh
 
 var
   gHwnd: HWND
   gIcon: HICON
   gTaskbarCreated: UINT = 0         # "TaskbarCreated" 注册消息（任务栏重启后重建图标）
+  gLang: Lang
+
+# ---------------------------------------------------------------------------
+# 多语言：按系统 UI 语言（GetUserDefaultUILanguage）选择，计划名由系统提供无需翻译
+# ---------------------------------------------------------------------------
+
+proc detectLang(): Lang =
+  ## 主语言 ID 为 0x04（LANG_CHINESE）时用中文，否则英文
+  let primaryLangId = int(GetUserDefaultUILanguage()) and 0x3FF
+  if primaryLangId == 0x04: langZh else: langEn
+
+proc tr(en, zh: string): string =
+  if gLang == langZh: zh else: en
+
+proc appTitle(): string = tr("Power Plan Switcher", "电源计划切换")
 
 # ---------------------------------------------------------------------------
 # 电源计划：powrprof.dll API
@@ -228,7 +244,7 @@ var gTrayAdded = false
 proc refreshTooltip() =
   let plans = enumPlans()
   let name = activePlanName(plans)
-  let tooltip = if name.len > 0: AppTitle & " - " & name else: AppTitle
+  let tooltip = if name.len > 0: appTitle() & " - " & name else: appTitle()
   if gTrayAdded:
     modifyTrayIcon(tooltip)
   else:
@@ -254,9 +270,9 @@ proc showTrayMenu() =
   var autoFlags = UINT MF_STRING
   if isAutoStartEnabled():
     autoFlags = autoFlags or MF_CHECKED
-  AppendMenuW(hMenu, autoFlags, CmdAutoStart, T("开机自启动"))
+  AppendMenuW(hMenu, autoFlags, CmdAutoStart, T(tr("Start at login", "开机自启动")))
   AppendMenuW(hMenu, MF_SEPARATOR, 0, nil)
-  AppendMenuW(hMenu, MF_STRING, CmdExit, T("退出"))
+  AppendMenuW(hMenu, MF_STRING, CmdExit, T(tr("Quit", "退出")))
 
   # 任务栏图标的弹出菜单需要先置为前台窗口
   SetForegroundWindow(gHwnd)
@@ -278,9 +294,9 @@ proc showTrayMenu() =
     let plan = plans[cmd - CmdBase]
     if setActivePlan(&plan.guid):
       refreshTooltip()
-      showBalloon(AppTitle, "已切换到：" & plan.name)
+      showBalloon(appTitle(), tr("Switched to: ", "已切换到：") & plan.name)
     else:
-      showBalloon(AppTitle, "切换失败：" & plan.name)
+      showBalloon(appTitle(), tr("Failed to switch: ", "切换失败：") & plan.name)
 
 # ---------------------------------------------------------------------------
 # 窗口过程与消息循环
@@ -309,6 +325,7 @@ proc wndProc(hwnd: HWND, msg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {.s
 
 proc main() =
   let hInstance = GetModuleHandleW(nil)
+  gLang = detectLang()
   gIcon = makeTrayIcon()
   gTaskbarCreated = RegisterWindowMessageW(T("TaskbarCreated"))
 
@@ -326,7 +343,7 @@ proc main() =
     lpszClassName: className)
   RegisterClassW(&wc)
 
-  gHwnd = CreateWindowExW(0, className, T(AppTitle), 0,
+  gHwnd = CreateWindowExW(0, className, T(appTitle()), 0,
     0, 0, 0, 0, 0, 0, hInstance, nil)
   if gHwnd == 0:
     quit("创建窗口失败")

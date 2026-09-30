@@ -10,6 +10,7 @@ A lightweight Windows system tray app written in [Nim](https://nim-lang.org/) fo
 - Balloon notification after switching plans
 - Optional "Start at login" toggle (writes to the registry `Run` key)
 - Re-creates the tray icon automatically when the taskbar restarts (e.g. after explorer.exe crashes)
+- UI language follows the system language (English / 简体中文); power plan names come from Windows and are always localized
 
 ## How it works
 
