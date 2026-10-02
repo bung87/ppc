@@ -18,7 +18,7 @@ jobs:
       - uses: alaviss/setup-nim@master
         with:
           path: nim
-          version: 2.2.4
+          version: "2.2"
 
       - name: Add gcc and nimble shims to PATH
         shell: bash
