@@ -26,18 +26,42 @@ A lightweight Windows system tray app written in [Nim](https://nim-lang.org/) fo
 ## Build
 
 ```bash
-nimble build_release    # release build, no console window, output: bin/ppc.exe
+nimble build            # release build, no console window, output: ./ppc.exe
 ```
 
 or manually:
 
 ```bash
-nim c -d:release --app:gui --opt:size -o:bin/ppc ppc.nim
+nim c -d:release --app:gui --opt:size -o:ppc.exe src/ppc.nim
 ```
+
+## Package
+
+```bash
+nimble install -d       # install winim + nimpacker
+nimble dist             # nimpacker build + zip -> dist/ppc-<version>-windows-x86_64.zip
+```
+
+`nimble dist` uses [nimpacker](https://github.com/nimpacker/nimpacker) to compile the
+release binary (via `nimble build -d:release`; release flags `--app:gui --opt:size`
+are set in [`config.nims`](config.nims)) into `build/windows/Release/`, then zips it
+into `dist/`. App metadata for nimpacker (product name, Inno Setup appId, install
+privileges) lives in [`nimpacker/meta.nims`](nimpacker/meta.nims); `nimpacker pack
+--target windows` can additionally build an Inno Setup installer
+(`dist/ppc-setup.exe`).
+
+## Release
+
+Pushing a tag starting with `v` (e.g. `git tag v0.1.0 && git push origin v0.1.0`)
+triggers the [Release workflow](.github/workflows/release.yml), which runs
+`nimble dist` on `windows-latest` and attaches the resulting zip to a GitHub
+Release. Remember to bump `version` in `ppc.nimble` before tagging, since the
+zip file name is derived from it.
+
 
 ## Usage
 
-Run `bin/ppc.exe`. Right-click the tray icon:
+Run `ppc.exe` (from the zip, or `build/windows/Release/ppc.exe` after `nimble dist`). Right-click the tray icon:
 
 - Select a power plan to activate it
 - Check/uncheck **Start at login** to toggle auto-start

@@ -4,7 +4,8 @@ version       = "0.1.0"
 author        = "crc32"
 description   = "Windows system tray power plan switcher"
 license       = "MIT"
-srcDir        = "."
+srcDir        = "src"
+bin           = @["ppc"]
 
 # Dependencies
 
@@ -13,6 +14,20 @@ srcDir        = "."
 # calls the Win32 API directly through winim instead.
 requires "nim >= 2.0.0"
 requires "winim >= 4.0.0"
+# Build/packaging tool used by the `dist` task (installed via `nimble install -d`)
+requires "nimpacker >= 0.2.6"
 
-task build_release, "Build release binary (no console window)":
-  exec "nim c -d:release --app:gui --opt:size -o:bin/ppc ppc.nim"
+# Release flags (--app:gui --opt:size) are set in config.nims, so both
+# `nimble build -d:release` (used by nimpacker) and manual `nim c -d:release`
+# produce a GUI-subsystem, size-optimized binary.
+
+task dist, "Package release binary with nimpacker into dist/":
+  # nimpacker only ships a .cmd shim (no .exe), so route through cmd /c;
+  # use the explicit .cmd name — a bare "nimpacker" would hit the extensionless
+  # bash shim that nimble also installs. nimpacker compiles via `nimble build`
+  # (see above) and moves the exe to build/windows/Release/ppc.exe
+  exec "cmd /c nimpacker.cmd build --target windows --release"
+  mkDir "dist"
+  let zipName = "dist/ppc-" & version & "-windows-x86_64.zip"
+  rmFile zipName
+  exec "powershell -NoProfile -Command Compress-Archive -Path build/windows/Release/ppc.exe -DestinationPath " & zipName
