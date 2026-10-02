@@ -15,10 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: alaviss/setup-nim@master
+      - uses: alaviss/setup-nim@0.1.1
         with:
           path: nim
-          version: "2.2"
+          version: version-2-2
 
       - name: Add gcc and nimble shims to PATH
         shell: bash
