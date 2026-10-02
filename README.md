@@ -38,9 +38,12 @@ nim c -d:release --app:gui --opt:size -o:ppc.exe src/ppc.nim
 ## Package
 
 ```bash
-nimble install -d       # install winim + nimpacker
+nimble install -d       # install winim + nimpacker (taskRequires, nimble >= 0.18)
 nimble dist             # nimpacker build + zip -> dist/ppc-<version>-windows-x86_64.zip
 ```
+
+If your nimble is too old for `taskRequires`, install the packaging tool manually:
+`nimble install https://github.com/bung87/nimpacker`.
 
 `nimble dist` uses [nimpacker](https://github.com/nimpacker/nimpacker) to compile the
 release binary (via `nimble build -d:release`; release flags `--app:gui --opt:size`
