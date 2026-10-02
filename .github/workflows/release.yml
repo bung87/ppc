@@ -15,9 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: jiro4989/setup-nim-action@v2
-        with:
-          nim-version: "2.2.x"
+      # setup-nim-action is unreliable; download the official Windows build instead
+      - name: Install Nim 2.2.4
+        shell: bash
+        run: |
+          curl -fSL -o nim.zip https://nim-lang.org/download/nim-2.2.4_x64.zip
+          unzip -q nim.zip
+          echo "$PWD/nim-2.2.4" >> "$GITHUB_PATH"
 
       - name: Install dependencies (winim, nimpacker)
         run: nimble install -d -y
