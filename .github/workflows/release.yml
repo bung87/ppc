@@ -23,9 +23,15 @@ jobs:
           unzip -q nim.zip
           # pwd -W: forward-slash Windows path (mixed separators can break PATH prepending)
           echo "$(cd nim-2.2.4 && pwd -W)/bin" >> "$GITHUB_PATH"
+          # gcc for the C backend (preinstalled MSYS2 mingw64 on windows runners)
+          echo "C:/msys64/mingw64/bin" >> "$GITHUB_PATH"
+          # nimble installs package shims (nimpacker.cmd) here
+          echo "$(cd ~ && pwd -W)/.nimble/bin" >> "$GITHUB_PATH"
 
       - name: Install dependencies (winim, nimpacker)
-        run: nimble install -d -y
+        run: |
+          nimble install -y https://github.com/khchen/winim
+          nimble install -y https://github.com/bung87/nimpacker
 
       - name: Build and package (nimble dist)
         run: nimble dist
