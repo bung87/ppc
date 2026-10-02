@@ -14,8 +14,11 @@ bin           = @["ppc"]
 # calls the Win32 API directly through winim instead.
 requires "nim >= 2.0.0"
 requires "winim >= 4.0.0"
-# Build/packaging tool used by the `dist` task (installed via `nimble install -d`)
-requires "nimpacker >= 0.2.6"
+
+# Packaging tool used by the `dist` task (installed via `nimble install -d` or
+# from git: nimble install https://github.com/bung87/nimpacker). Scoped to the
+# task because it is not in nimble's official package list.
+taskRequires "dist", "nimpacker >= 0.2.6"
 
 # Release flags (--app:gui --opt:size) are set in config.nims, so both
 # `nimble build -d:release` (used by nimpacker) and manual `nim c -d:release`

@@ -15,28 +15,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # setup-nim-action is unreliable; download the official Windows build instead
-      - name: Install Nim 2.2.4
+      - uses: alaviss/setup-nim@0.1.1
+        with:
+          path: nim
+          version: version-2-2
+
+      - name: Add gcc and nimble shims to PATH
         shell: bash
         run: |
-          curl -fSL -o nim.zip https://nim-lang.org/download/nim-2.2.4_x64.zip
-          unzip -q nim.zip
-          # pwd -W: forward-slash Windows path (mixed separators can break PATH prepending)
-          echo "$(cd nim-2.2.4 && pwd -W)/bin" >> "$GITHUB_PATH"
           # gcc for the C backend (preinstalled MSYS2 mingw64 on windows runners)
           echo "C:/msys64/mingw64/bin" >> "$GITHUB_PATH"
           # nimble installs package shims (nimpacker.cmd) here
           echo "$(cd ~ && pwd -W)/.nimble/bin" >> "$GITHUB_PATH"
 
       - name: Install dependencies (winim, nimpacker)
+        shell: bash
         run: |
-          nimble install -y https://github.com/khchen/winim
-          nimble install -y https://github.com/bung87/nimpacker
+          # retry: Windows Defender sometimes locks freshly built exes ("Access is denied")
+          for i in 1 2 3; do
+            nimble install -y https://github.com/khchen/winim && break
+            [ $i -lt 3 ] && sleep 15
+          done
+          for i in 1 2 3; do
+            nimble install -y https://github.com/bung87/nimpacker && break
+            [ $i -lt 3 ] && sleep 15
+          done
 
       - name: Build and package (nimble dist)
         run: nimble dist
 
       - name: Publish release assets
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*.zip
